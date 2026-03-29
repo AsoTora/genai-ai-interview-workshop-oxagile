@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --font-heading: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-red: #C1272D;
+  --color-brand-dark: #28292B;
+  --color-brand-navy: #010F29;
+  --color-brand-grey: #818286;
+  --color-brand-light: #E6E7EA;
+  --color-brand-blue-grey: #D6D9DD;
+  --color-brand-grey-blue: #4F5F7C;
+}
+
+html {
+  @apply bg-white text-brand-dark;
+  /* Prevent iOS Safari from collapsing or hiding text sizing in flex layouts */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}

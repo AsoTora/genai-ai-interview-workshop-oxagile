@@ -1,0 +1,11 @@
+{
+  "title": "AI agent interviewer",
+  "description": "A neutral five-question survey for testing the voice interview flow during the workshop.",
+  "questions": [
+    "To get started, could you briefly introduce yourself and share a little about what you do?",
+    "Tell me about a recent project, task, or activity that you enjoyed working on. What made it interesting to you?",
+    "Describe a challenge you faced recently and how you approached solving it.",
+    "When you work with other people, what kind of collaboration style helps you do your best work?",
+    "Looking ahead, what is one skill, topic, or area you would like to improve or learn more about?"
+  ]
+}

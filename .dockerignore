@@ -1,0 +1,38 @@
+# Dependencies & build artifacts
+node_modules
+build
+.react-router
+*.tsbuildinfo
+
+# Secrets and local env (never send to daemon / image layers)
+.env
+
+# Git & VCS
+.git
+.gitignore
+.gitattributes
+
+# Local tooling
+.worktrees
+coverage
+
+# OS & editor
+.DS_Store
+.idea
+.vscode
+.cursor
+
+# Logs & debug
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker metadata (not needed inside /app during COPY . .)
+Dockerfile
+.dockerignore
+
+# Docs (not required for pnpm build)
+README.md
+AGENTS.md
