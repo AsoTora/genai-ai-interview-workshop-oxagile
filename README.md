@@ -77,6 +77,18 @@ Requirements:
 - `pnpm`
 - `OPENAI_API_KEY` with Realtime API access for the voice branches
 
+optional:
+
+- [OpenAI developer documentation MCP server](https://developers.openai.com/learn/docs-mcp)
+
+```json
+{
+  "mcpServers": {
+    "openai-mcp": {
+      "url": "https://developers.openai.com/mcp"
+    }
+  }
+}
 Install and run:
 
 ```bash
