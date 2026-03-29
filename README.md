@@ -4,12 +4,8 @@
 
 Public starter repo for a 60-minute live workshop that builds a voice-powered interview app with OpenAI Realtime, React Router v7, and Express.
 
-## `02-voice` branch about
-
-This branch is to establish scaffolder openai Realtime connection via the agent SDK using webRTC and the token endpoint.
-
-Architecture:
-![token.png](./docs/eph_token.png)
+**Architecture:**
+![architecture.png](./docs/architecture.png)
 
 ## What This Repo Is
 
@@ -24,6 +20,16 @@ Architecture:
 - `04-insights`: interview completion detection and structured insights
 - `05-complete`: full working demo and workshop fallback branch
 
+### `01-scaffold` branch about
+
+This branch is to establish base app scaffold and demo setup.
+
+### `02-voice` branch about
+
+This branch is to establish scaffolder openai Realtime connection via the agent SDK using webRTC and the token endpoint.
+
+Architecture:
+![token.png](./docs/eph_token.png)
 
 ## Local Setup
 
