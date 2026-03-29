@@ -48,6 +48,27 @@ graph LR
     BROWSER --> CTRL[Pause / Resume / Reset]
 ```
 
+### `04-insights` branch
+
+This branch adds explicit interview completion via a Realtime tool (`finish_interview`), a server route that turns the transcript into structured insights, and an insights panel on the demo page.
+
+The interviewer instructions tell the model to thank the participant in speech, then call `finish_interview` once. The tool handler POSTs the current transcript to `POST /api/insights`, which runs a Chat Completions call with Zod-validated JSON output, updates the UI, and closes the voice session.
+
+```mermaid
+graph LR
+    JSON[interview.json] --> PB[prompt-builder]
+    PB -->|+ finishing rules| TOKEN[POST /api/token]
+    BROWSER[React Demo Page] -->|WebRTC + tools| OAI[OpenAI Realtime]
+    OAI -->|finish_interview| BROWSER
+    BROWSER -->|POST transcript| INS[POST /api/insights]
+    INS -->|Zod-validated insights| IP[InsightsPanel]
+    BROWSER --> TP[TranscriptPanel]
+```
+
+### `05-complete` branch about
+
+This branch is the full working demo and workshop fallback: all features from prior branches with stable defaults.
+
 ## Local Setup
 
 Requirements:
@@ -56,6 +77,18 @@ Requirements:
 - `pnpm`
 - `OPENAI_API_KEY` with Realtime API access for the voice branches
 
+optional:
+
+- [OpenAI developer documentation MCP server](https://developers.openai.com/learn/docs-mcp)
+
+```json
+{
+  "mcpServers": {
+    "openai-mcp": {
+      "url": "https://developers.openai.com/mcp"
+    }
+  }
+}
 Install and run:
 
 ```bash
