@@ -89,6 +89,8 @@ optional:
     }
   }
 }
+```
+
 Install and run:
 
 ```bash
