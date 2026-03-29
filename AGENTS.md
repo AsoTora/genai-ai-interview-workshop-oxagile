@@ -37,6 +37,7 @@ Use the branding/oxagile.md file for the branding and design. If not specified, 
 - Use `zod` for schema validation
 - Use the OpenAI Agents SDK as the canonical voice implementation path
 - Keep the workshop docs and branch guide updated when the implementation changes
+- Always use the OpenAI developer documentation MCP server if you need to work with the OpenAI API, ChatGPT Apps SDK without me having to explicitly ask.
 
 ## Key Files And Contracts
 
