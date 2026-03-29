@@ -1,8 +1,8 @@
 # Voice Survey Workshop
 
-![Oxagile](./branding/company-logo.svg) × ![GenAI Zürich](./public/favicon.png)
+![Oxagile](./branding/company-logo.svg) × GenAI Zürich ![GenAI Zürich](./public/favicon.png)
 
-Public starter repo for a 60-minute live workshop that builds a voice-powered interview app with OpenAI Realtime, React Router v7, and Express.
+A voice-powered interview app with OpenAI Realtime API and Agent SDK. The app is a single-page voice interviewer: talk to an AI voice, answer the survey questions from `interview.json`.
 
 **Architecture:**
 ![architecture.png](./docs/architecture.png)
@@ -68,6 +68,8 @@ graph LR
 ### `05-complete` branch about
 
 This branch is the full working demo and workshop fallback: all features from prior branches with stable defaults.
+
+
 
 ## Local Setup
 
