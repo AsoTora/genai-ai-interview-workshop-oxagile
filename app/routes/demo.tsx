@@ -1,5 +1,8 @@
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { Route } from "./+types/demo";
 import interview from "../../interview.json";
+
+type ConnectionStatus = "idle" | "connecting" | "connected" | "error";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,6 +12,77 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Demo() {
+  const [status, setStatus] = useState<ConnectionStatus>("idle");
+  const [micActive, setMicActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const sessionRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      sessionRef.current?.close?.();
+    };
+  }, []);
+
+  const startInterview = useCallback(async () => {
+    try {
+      setStatus("connecting");
+      setError(null);
+
+      const tokenRes = await fetch("/api/token", { method: "POST" });
+      if (!tokenRes.ok) {
+        const body = await tokenRes.text();
+        throw new Error(`Token request failed (${tokenRes.status}): ${body}`);
+      }
+      const { client_secret } = await tokenRes.json();
+
+      const { RealtimeAgent, RealtimeSession } = await import(
+        "@openai/agents/realtime"
+      );
+
+      const instructions = [
+        `You are a friendly AI interviewer conducting: "${interview.title}".`,
+        interview.description,
+        `Ask these questions one at a time, waiting for the user's full response before proceeding:`,
+        ...interview.questions.map((q, i) => `${i + 1}. ${q}`),
+        `Start by greeting the user, then begin with question 1.`,
+        `After all questions, thank the participant and say goodbye.`,
+      ].join("\n");
+
+      const agent = new RealtimeAgent({
+        name: "Interviewer",
+        instructions,
+      });
+
+      const session = new RealtimeSession(agent);
+
+      sessionRef.current = session;
+
+      await session.connect({ apiKey: client_secret });
+
+      setStatus("connected");
+      setMicActive(true);
+    } catch (err) {
+      console.error("Connection error:", err);
+      setStatus("error");
+      setError(err instanceof Error ? err.message : "Connection failed");
+      sessionRef.current = null;
+    }
+  }, []);
+
+  const stopInterview = useCallback(() => {
+    try {
+      sessionRef.current?.close?.();
+    } catch {
+      // ignore close errors
+    }
+    sessionRef.current = null;
+    setStatus("idle");
+    setMicActive(false);
+  }, []);
+
+  const isConnected = status === "connected";
+  const isConnecting = status === "connecting";
+
   return (
     <main className="min-h-screen bg-white">
       <header className="border-b border-brand-light">
@@ -72,22 +146,102 @@ export default function Demo() {
           ))}
         </ol>
 
-        <div className="mt-10 flex justify-center">
-          <button
-            type="button"
-            disabled
-            className="inline-flex items-center gap-2.5 rounded-xl bg-brand-red px-8 py-4 text-lg font-semibold text-white opacity-60 shadow-lg cursor-not-allowed"
-          >
-            <MicIcon />
-            Talk to Interviewer
-          </button>
-        </div>
+        <div className="mt-10 flex flex-col items-center gap-5">
+          <div className="flex items-center gap-3">
+            <ConnectionBadge status={status} />
+            <MicBadge active={micActive} />
+          </div>
 
-        <p className="mt-4 text-center text-sm text-brand-grey">
-          Voice connection will be enabled in the next workshop step.
-        </p>
+          {isConnected ? (
+            <button
+              type="button"
+              onClick={stopInterview}
+              className="inline-flex items-center gap-2.5 rounded-xl bg-brand-dark px-8 py-4 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-brand-navy"
+            >
+              <StopIcon />
+              End Interview
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={startInterview}
+              disabled={isConnecting}
+              className="inline-flex items-center gap-2.5 rounded-xl bg-brand-red px-8 py-4 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isConnecting ? <Spinner /> : <MicIcon />}
+              {isConnecting ? "Connecting…" : "Talk to Interviewer"}
+            </button>
+          )}
+
+          {error && (
+            <p className="max-w-md text-center text-sm text-red-600">
+              {error}
+            </p>
+          )}
+        </div>
       </div>
     </main>
+  );
+}
+
+function ConnectionBadge({ status }: { status: ConnectionStatus }) {
+  const config = {
+    idle: { label: "Disconnected", dot: "bg-gray-400", text: "text-gray-600" },
+    connecting: {
+      label: "Connecting",
+      dot: "bg-amber-400 animate-pulse",
+      text: "text-amber-700",
+    },
+    connected: {
+      label: "Connected",
+      dot: "bg-emerald-500",
+      text: "text-emerald-700",
+    },
+    error: { label: "Error", dot: "bg-red-500", text: "text-red-700" },
+  }[status];
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${config.text}`}
+    >
+      <span className={`h-2 w-2 rounded-full ${config.dot}`} />
+      {config.label}
+    </span>
+  );
+}
+
+function MicBadge({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${
+        active ? "text-emerald-700" : "text-gray-500"
+      }`}
+    >
+      <MicSmallIcon active={active} />
+      {active ? "Mic on" : "Mic off"}
+    </span>
+  );
+}
+
+function MicSmallIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={active ? "text-emerald-600" : "text-gray-400"}
+    >
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" x2="12" y1="19" y2="22" />
+      {!active && <line x1="2" x2="22" y1="2" y2="22" />}
+    </svg>
   );
 }
 
@@ -107,6 +261,49 @@ function MicIcon() {
       <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
       <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
       <line x1="12" x2="12" y1="19" y2="22" />
+    </svg>
+  );
+}
+
+function StopIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="6" y="6" width="12" height="12" rx="1" />
+    </svg>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="h-5 w-5 animate-spin"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
     </svg>
   );
 }
