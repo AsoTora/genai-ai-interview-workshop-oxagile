@@ -31,6 +31,23 @@ This branch is to establish scaffolder openai Realtime connection via the agent 
 Architecture:
 ![token.png](./docs/eph_token.png)
 
+### `03-interview` branch
+
+This branch adds the prompt-driven interview flow and a live transcript panel. The server now builds a structured interviewer prompt from `interview.json` and sends it with the ephemeral token config (including semantic VAD and noise reduction).
+
+On connect the browser fires `response.create` so the AI speaks the first question immediately.
+
+```mermaid
+graph LR
+    JSON[interview.json] -->|questions| PB[prompt-builder]
+    PB -->|instructions| TOKEN[POST /api/token]
+    TOKEN -->|client_secret +semantic VAD +noise reduction| BROWSER[React Demo Page]
+    BROWSER -->|WebRTC audio| OAI[OpenAI Realtimegpt-realtime-1.5]
+    OAI -->|audio + history_updated| BROWSER
+    BROWSER --> TP[TranscriptPanellive chat bubbles]
+    BROWSER --> CTRL[Pause / Resume / Reset]
+```
+
 ## Local Setup
 
 Requirements:

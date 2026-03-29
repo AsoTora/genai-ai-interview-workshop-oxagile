@@ -1,6 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Route } from "./+types/demo";
 import interview from "../../interview.json";
+import { TranscriptPanel } from "~/components/TranscriptPanel";
+import {
+  extractTranscript,
+  type TranscriptEntry,
+  type RealtimeHistoryItem,
+} from "~/lib/transcript";
 
 type ConnectionStatus = "idle" | "connecting" | "connected" | "error";
 
@@ -14,7 +20,9 @@ export function meta({}: Route.MetaArgs) {
 export default function Demo() {
   const [status, setStatus] = useState<ConnectionStatus>("idle");
   const [micActive, setMicActive] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const sessionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -27,6 +35,8 @@ export default function Demo() {
     try {
       setStatus("connecting");
       setError(null);
+      setTranscript([]);
+      setPaused(false);
 
       const tokenRes = await fetch("/api/token", { method: "POST" });
       if (!tokenRes.ok) {
@@ -39,21 +49,31 @@ export default function Demo() {
         "@openai/agents/realtime"
       );
 
-      const instructions = [
-        `You are a friendly AI interviewer conducting: "${interview.title}".`,
-        interview.description,
-        `Ask these questions one at a time, waiting for the user's full response before proceeding:`,
-        ...interview.questions.map((q, i) => `${i + 1}. ${q}`),
-        `Start by greeting the user, then begin with question 1.`,
-        `After all questions, thank the participant and say goodbye.`,
-      ].join("\n");
-
       const agent = new RealtimeAgent({
         name: "Interviewer",
-        instructions,
       });
 
-      const session = new RealtimeSession(agent);
+      const session = new RealtimeSession(agent, {
+        config: {
+          audio: {
+            input: {
+              turnDetection: {
+                type: "semantic_vad",
+                eagerness: "low",
+              },
+              noiseReduction: { type: "near_field" },
+            },
+          },
+        },
+      });
+
+      session.on("history_updated", (history: RealtimeHistoryItem[]) => {
+        setTranscript(extractTranscript(history));
+      });
+
+      session.on("error", (err: unknown) => {
+        console.error("Session error:", err);
+      });
 
       sessionRef.current = session;
 
@@ -61,6 +81,9 @@ export default function Demo() {
 
       setStatus("connected");
       setMicActive(true);
+
+      // https://platform.openai.com/docs/api-reference/realtime-client-events/response/create
+      session.transport.sendEvent({ type: "response.create" });
     } catch (err) {
       console.error("Connection error:", err);
       setStatus("error");
@@ -73,12 +96,34 @@ export default function Demo() {
     try {
       sessionRef.current?.close?.();
     } catch {
-      // ignore close errors
     }
     sessionRef.current = null;
     setStatus("idle");
     setMicActive(false);
+    setPaused(false);
   }, []);
+
+  const togglePause = useCallback(() => {
+    const session = sessionRef.current;
+    if (!session) return;
+
+    const next = !paused;
+    setPaused(next);
+
+    if (next) {
+      session.mute(true);
+      session.interrupt();
+      setMicActive(false);
+    } else {
+      session.mute(false);
+      setMicActive(true);
+    }
+  }, [paused]);
+
+  const resetInterview = useCallback(() => {
+    stopInterview();
+    setTranscript([]);
+  }, [stopInterview]);
 
   const isConnected = status === "connected";
   const isConnecting = status === "connecting";
@@ -146,21 +191,52 @@ export default function Demo() {
           ))}
         </ol>
 
+        <div className="mt-10">
+          <h2 className="mb-4 text-lg font-semibold text-brand-navy">
+            Live Transcript
+          </h2>
+          <TranscriptPanel entries={transcript} />
+        </div>
+
         <div className="mt-10 flex flex-col items-center gap-5">
           <div className="flex items-center gap-3">
             <ConnectionBadge status={status} />
             <MicBadge active={micActive} />
+            {paused && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                <span className="h-2 w-2 rounded-full bg-amber-400" />
+                Paused
+              </span>
+            )}
           </div>
 
           {isConnected ? (
-            <button
-              type="button"
-              onClick={stopInterview}
-              className="inline-flex items-center gap-2.5 rounded-xl bg-brand-dark px-8 py-4 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-brand-navy"
-            >
-              <StopIcon />
-              End Interview
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={togglePause}
+                className="inline-flex items-center gap-2 rounded-xl border border-brand-light bg-white px-6 py-3 text-sm font-semibold text-brand-dark shadow-sm transition-colors hover:bg-gray-50"
+              >
+                {paused ? <PlayIcon /> : <PauseIcon />}
+                {paused ? "Resume" : "Pause"}
+              </button>
+              <button
+                type="button"
+                onClick={resetInterview}
+                className="inline-flex items-center gap-2 rounded-xl border border-brand-light bg-white px-6 py-3 text-sm font-semibold text-brand-dark shadow-sm transition-colors hover:bg-gray-50"
+              >
+                <ResetIcon />
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={stopInterview}
+                className="inline-flex items-center gap-2.5 rounded-xl bg-brand-dark px-8 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-brand-navy"
+              >
+                <StopIcon />
+                End Interview
+              </button>
+            </div>
           ) : (
             <button
               type="button"
@@ -269,8 +345,8 @@ function StopIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="22"
-      height="22"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -279,6 +355,62 @@ function StopIcon() {
       strokeLinejoin="round"
     >
       <rect x="6" y="6" width="12" height="12" rx="1" />
+    </svg>
+  );
+}
+
+function PauseIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="6" y="4" width="4" height="16" rx="1" />
+      <rect x="14" y="4" width="4" height="16" rx="1" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polygon points="6 3 20 12 6 21 6 3" />
+    </svg>
+  );
+}
+
+function ResetIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
     </svg>
   );
 }
