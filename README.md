@@ -14,11 +14,11 @@ Public starter repo for a 60-minute live workshop that builds a voice-powered in
 
 ## Branch Guide
 
-- `01-scaffold`: base app scaffold and workshop setup
-- `02-voice`: ephemeral token endpoint and browser voice connection
-- `03-interview`: prompt-driven interview flow and live transcript
-- `04-insights`: interview completion detection and structured insights
-- `05-complete`: full working demo and workshop fallback branch
+- **[01-scaffold](https://github.com/AsoTora/genai-ai-interview-workshop-oxagile/tree/01-scaffold)** — base app scaffold and workshop setup
+- **[02-voice](https://github.com/AsoTora/genai-ai-interview-workshop-oxagile/tree/02-voice)** — ephemeral token endpoint and browser voice connection
+- **[03-interview](https://github.com/AsoTora/genai-ai-interview-workshop-oxagile/tree/03-interview)** — prompt-driven interview flow and live transcript
+- **[04-insights](https://github.com/AsoTora/genai-ai-interview-workshop-oxagile/tree/04-insights)** — interview completion detection and structured insights
+- **[05-complete](https://github.com/AsoTora/genai-ai-interview-workshop-oxagile/tree/05-complete)** — full working demo and workshop fallback branch
 
 ### `01-scaffold` branch about
 
