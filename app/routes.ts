@@ -5,4 +5,5 @@ export default [
   route("demo", "routes/demo.tsx"),
   route("health", "routes/health.ts"),
   route("api/token", "routes/api.token.ts"),
+  route("api/insights", "routes/api.insights.ts"),
 ] satisfies RouteConfig;

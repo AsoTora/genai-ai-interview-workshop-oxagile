@@ -16,7 +16,7 @@ export async function action() {
       audio: {
         input: {
           transcription: {
-            model: "gpt-4o-mini-transcribe",
+            model: "gpt-4o-transcribe",
             language: "en",
           },
           // https://platform.openai.com/docs/guides/realtime-webrtc#noise-cancellation

@@ -1,7 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Route } from "./+types/demo";
+import { tool } from "@openai/agents";
+import { z } from "zod";
 import interview from "../../interview.json";
+import { InsightsPanel } from "~/components/InsightsPanel";
 import { TranscriptPanel } from "~/components/TranscriptPanel";
+import type { InterviewInsights } from "~/lib/insights-schema";
 import {
   extractTranscript,
   type TranscriptEntry,
@@ -23,7 +27,16 @@ export default function Demo() {
   const [paused, setPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
+  const [insights, setInsights] = useState<InterviewInsights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
   const sessionRef = useRef<any>(null);
+  const transcriptRef = useRef<TranscriptEntry[]>([]);
+  const finishInterviewPromiseRef = useRef<Promise<string> | null>(null);
+
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
 
   useEffect(() => {
     return () => {
@@ -37,6 +50,9 @@ export default function Demo() {
       setError(null);
       setTranscript([]);
       setPaused(false);
+      setInsights(null);
+      setInsightsError(null);
+      finishInterviewPromiseRef.current = null;
 
       const tokenRes = await fetch("/api/token", { method: "POST" });
       if (!tokenRes.ok) {
@@ -49,8 +65,75 @@ export default function Demo() {
         "@openai/agents/realtime"
       );
 
+      const endSessionUi = () => {
+        try {
+          sessionRef.current?.close?.();
+        } catch {
+          /* ignore */
+        }
+        sessionRef.current = null;
+        setStatus("idle");
+        setMicActive(false);
+        setPaused(false);
+      };
+
+      const finishInterviewTool = tool({
+        name: "finish_interview",
+        description:
+          "Call once after all survey questions are answered and you have thanked the participant out loud. Ends the voice session and generates insights from the conversation. Never call before the interview is complete, and never call more than once.",
+        parameters: z.object({}),
+        strict: true,
+        execute: async () => {
+          if (!finishInterviewPromiseRef.current) {
+            finishInterviewPromiseRef.current = (async () => {
+              setInsightsLoading(true);
+              setInsightsError(null);
+              try {
+                const res = await fetch("/api/insights", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    transcript: transcriptRef.current,
+                  }),
+                });
+                let payload: unknown = null;
+                try {
+                  payload = await res.json();
+                } catch {
+                  payload = null;
+                }
+                if (!res.ok) {
+                  const msg =
+                    payload &&
+                    typeof payload === "object" &&
+                    "error" in payload &&
+                    typeof (payload as { error: unknown }).error === "string"
+                      ? (payload as { error: string }).error
+                      : `Insights request failed (${res.status})`;
+                  throw new Error(msg);
+                }
+                setInsights(payload as InterviewInsights);
+                queueMicrotask(endSessionUi);
+                return "Interview completed. The session has ended.";
+              } catch (err) {
+                finishInterviewPromiseRef.current = null;
+                const msg =
+                  err instanceof Error ? err.message : "Insights request failed";
+                setInsightsError(msg);
+                queueMicrotask(endSessionUi);
+                return `Insights could not be generated: ${msg}`;
+              } finally {
+                setInsightsLoading(false);
+              }
+            })();
+          }
+          return finishInterviewPromiseRef.current;
+        },
+      });
+
       const agent = new RealtimeAgent({
         name: "Interviewer",
+        tools: [finishInterviewTool],
       });
 
       const session = new RealtimeSession(agent, {
@@ -123,6 +206,10 @@ export default function Demo() {
   const resetInterview = useCallback(() => {
     stopInterview();
     setTranscript([]);
+    finishInterviewPromiseRef.current = null;
+    setInsights(null);
+    setInsightsError(null);
+    setInsightsLoading(false);
   }, [stopInterview]);
 
   const isConnected = status === "connected";
@@ -197,6 +284,12 @@ export default function Demo() {
           </h2>
           <TranscriptPanel entries={transcript} />
         </div>
+
+        <InsightsPanel
+          insights={insights}
+          loading={insightsLoading}
+          error={insightsError}
+        />
 
         <div className="mt-10 flex flex-col items-center gap-5">
           <div className="flex items-center gap-3">

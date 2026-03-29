@@ -10,7 +10,7 @@ Public starter repo for a 60-minute live workshop that builds a voice-powered in
 ## What This Repo Is
 
 - The workshop is taught branch-by-branch. Each named branch is a checkpoint attendees can jump to if they fall behind.
-- The final app is a single-page voice interviewer: talk to an AI voice, answer five interview questions, then view structured insights.
+- The final app is a single-page voice interviewer: talk to an AI voice, answer the survey questions from `interview.json`, then view structured insights after the model ends the session.
 
 ## Branch Guide
 
@@ -47,6 +47,27 @@ graph LR
     BROWSER --> TP[TranscriptPanellive chat bubbles]
     BROWSER --> CTRL[Pause / Resume / Reset]
 ```
+
+### `04-insights` branch
+
+This branch adds explicit interview completion via a Realtime tool (`finish_interview`), a server route that turns the transcript into structured insights, and an insights panel on the demo page.
+
+The interviewer instructions tell the model to thank the participant in speech, then call `finish_interview` once. The tool handler POSTs the current transcript to `POST /api/insights`, which runs a Chat Completions call with Zod-validated JSON output, updates the UI, and closes the voice session.
+
+```mermaid
+graph LR
+    JSON[interview.json] --> PB[prompt-builder]
+    PB -->|+ finishing rules| TOKEN[POST /api/token]
+    BROWSER[React Demo Page] -->|WebRTC + tools| OAI[OpenAI Realtime]
+    OAI -->|finish_interview| BROWSER
+    BROWSER -->|POST transcript| INS[POST /api/insights]
+    INS -->|Zod-validated insights| IP[InsightsPanel]
+    BROWSER --> TP[TranscriptPanel]
+```
+
+### `05-complete` branch about
+
+This branch is the full working demo and workshop fallback: all features from prior branches with stable defaults.
 
 ## Local Setup
 

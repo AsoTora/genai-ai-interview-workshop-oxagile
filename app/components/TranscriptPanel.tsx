@@ -14,20 +14,14 @@ export function TranscriptPanel({ entries }: TranscriptPanelProps) {
 
   if (entries.length === 0) {
     return (
-      <div
-        data-testid="transcript-empty"
-        className="flex items-center justify-center rounded-xl border border-dashed border-brand-light py-12 text-sm text-brand-grey"
-      >
+      <div className="flex items-center justify-center rounded-xl border border-dashed border-brand-light py-12 text-sm text-brand-grey">
         Transcript will appear here once the interview begins…
       </div>
     );
   }
 
   return (
-    <div
-      data-testid="transcript-panel"
-      className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto rounded-xl border border-brand-light bg-gray-50/60 p-4"
-    >
+    <div className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto rounded-xl border border-brand-light bg-gray-50/60 p-4">
       {entries.map((entry) => (
         <Bubble key={entry.id} entry={entry} />
       ))}
@@ -40,10 +34,7 @@ function Bubble({ entry }: { entry: TranscriptEntry }) {
   const isAssistant = entry.role === "assistant";
 
   return (
-    <div
-      data-testid={`bubble-${entry.role}`}
-      className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}
-    >
+    <div className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}>
       <div
         className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
           isAssistant
