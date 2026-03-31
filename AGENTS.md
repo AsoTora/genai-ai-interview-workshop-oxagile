@@ -1,4 +1,4 @@
-# Voice Survey Workshop
+# Oxagile Voice Agent Workshop
 
 ## Purpose
 
