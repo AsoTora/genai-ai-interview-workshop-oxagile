@@ -3,7 +3,7 @@ import type { Route } from "./+types/home";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Voice Interview Workshop" },
+    { title: "Oxagile Voice Agent Workshop" },
     { name: "description", content: "Build a voice-powered survey app with OpenAI Realtime API." },
   ];
 }
@@ -30,7 +30,7 @@ export default function Home() {
           </a>
         </div>
         <h1 className="text-center text-4xl font-bold tracking-tight text-brand-navy">
-          Voice Interview Workshop
+          Oxagile Voice Agent Workshop
         </h1>
         <p className="mt-4 max-w-md text-center text-lg leading-relaxed text-brand-grey">
           A live-coding workshop building a voice-powered survey app with
