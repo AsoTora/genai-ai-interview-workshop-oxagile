@@ -3,7 +3,7 @@ import interview from "../../interview.json";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: `${interview.title} — Voice Interview Workshop` },
+    { title: `${interview.title} — Oxagile Voice Agent Workshop` },
     { name: "description", content: interview.description },
   ];
 }
@@ -23,7 +23,7 @@ export default function Demo() {
               <img src="/logo.svg" alt="Oxagile" className="h-7 w-auto" />
             </a>
             <span className="min-w-0 break-words text-sm font-medium leading-snug text-brand-grey">
-              Voice Interview Workshop
+              Oxagile Voice Agent Workshop
             </span>
           </div>
           <a
