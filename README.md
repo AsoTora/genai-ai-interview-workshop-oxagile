@@ -1,4 +1,4 @@
-# Voice Survey Workshop
+# Oxagile Voice Agent Workshop
 
 ![Oxagile](./branding/company-logo.svg) × GenAI Zürich ![GenAI Zürich](./public/favicon.png)
 
@@ -108,8 +108,8 @@ Open: [http://localhost:5173/](http://localhost:5173/)
 Build and run locally:
 
 ```bash
-docker build -t voice-interview-workshop .
-docker run -p 3000:3000 voice-interview-workshop
+docker build -t oxagile-voice-agent-workshop .
+docker run -p 3000:3000 oxagile-voice-agent-workshop
 ```
 
 ### Fly.io
